@@ -1,4 +1,4 @@
-package main
+package resp
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func readerLine(r *bufio.Reader) (string, error) {
+func ReaderLine(r *bufio.Reader) (string, error) {
 	var buf []byte
 	for {
 		b, err := r.ReadByte()
@@ -29,7 +29,7 @@ func readerLine(r *bufio.Reader) (string, error) {
 	}
 }
 
-func readExactly(r *bufio.Reader, n int) (string, error) {
+func ReadExactly(r *bufio.Reader, n int) (string, error) {
 	var buf []byte
 	for i := 0; i < n; i++ {
 		b, err := r.ReadByte()
@@ -41,8 +41,8 @@ func readExactly(r *bufio.Reader, n int) (string, error) {
 	return string(buf), nil
 }
 
-func readBulkString(r *bufio.Reader) (string, error) {
-	str, err := readerLine(r)
+func ReadBulkString(r *bufio.Reader) (string, error) {
+	str, err := ReaderLine(r)
 
 	if err != nil {
 		return "error with reader line", err
@@ -56,7 +56,7 @@ func readBulkString(r *bufio.Reader) (string, error) {
 		return "error with atoi", err4
 	}
 
-	res, err1 := readExactly(r, size)
+	res, err1 := ReadExactly(r, size)
 
 	if err1 != nil {
 		return "error with read exactly", err1
@@ -80,11 +80,11 @@ func readBulkString(r *bufio.Reader) (string, error) {
 	return res, nil
 }
 
-func readArray(r *bufio.Reader) ([]string, error) {
+func ReadArray(r *bufio.Reader) ([]string, error) {
 	res := make([]string, 0)
-	line, err := readerLine(r)
+	line, err := ReaderLine(r)
 	if err != nil {
-		return []string{"error with readerLine"}, err
+		return []string{"error with ReaderLine"}, err
 	}
 	if line[0] != '*' {
 		return []string{}, errors.New("invalid format of appeal")
@@ -96,9 +96,9 @@ func readArray(r *bufio.Reader) ([]string, error) {
 	}
 
 	for i := 0; i < count; i++ {
-		bulk, err := readBulkString(r)
+		bulk, err := ReadBulkString(r)
 		if err != nil {
-			return []string{"eror with readBulkString"}, err
+			return []string{"error with ReadBulkString"}, err
 		}
 		res = append(res, bulk)
 	}

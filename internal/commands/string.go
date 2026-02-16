@@ -1,85 +1,75 @@
 package commands
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/FMR006/redis-go/internal/resp"
+	"github.com/FMR006/redis-go/internal/storage"
 )
 
-func cmdSet(cmd []string, storage map[string]string, expireAt map[string]time.Time, mu *sync.RWMutex) string {
+func cmdSet(cmd []string, storage *storage.Storage) string {
 	lower := strings.ToLower(cmd[0])
 	var res string
 
 	switch len(cmd) {
 	case 3:
-		mu.Lock()
-		storage[cmd[1]] = cmd[2]
-		delete(expireAt, cmd[1])
-		mu.Unlock()
-		res = "+OK\r\n"
+		storage.Set(cmd[1], cmd[2], time.Time{})
+		res = resp.SimpleString("OK")
 
 	case 5:
-		res = setExPx(cmd, storage, expireAt, mu)
+		res = setExPx(cmd, storage)
 	default:
-		res = fmt.Sprintf("-ERR wrong number of arguments for '%s' command\r\n", lower)
+		res = resp.WrongNumberOfArgs(lower)
 	}
 	return res
 
 }
 
-func setExPx(cmd []string, storage map[string]string, expireAt map[string]time.Time, mu *sync.RWMutex) string {
+func setExPx(cmd []string, storage *storage.Storage) string {
 	var res string
 	upper := strings.ToUpper(cmd[3])
-	lower := strings.ToLower(cmd[3])
 	switch upper {
 	case "EX":
 		i, err := strconv.Atoi(cmd[4])
 
 		if err != nil {
-			res := fmt.Sprintf("-ERR wrong argument for '%s' flag\r\n", lower)
+			res = resp.WrongType()
 			return res
 		}
-		mu.Lock()
-		storage[cmd[1]] = cmd[2]
-		expireAt[cmd[1]] = time.Now().Add(time.Second * time.Duration(i))
-		mu.Unlock()
-		res = "+OK\r\n"
+		t := time.Now().Add(time.Second * time.Duration(i))
+		storage.Set(cmd[1], cmd[2], t)
+		res = resp.SimpleString("OK")
 		return res
 	case "PX":
 		i, err := strconv.Atoi(cmd[4])
 
 		if err != nil {
-			res = fmt.Sprintf("-ERR wrong argument for '%s' flag\r\n", lower)
+			res = resp.WrongType()
 			return res
 		}
-		mu.Lock()
-		storage[cmd[1]] = cmd[2]
-		expireAt[cmd[1]] = time.Now().Add(time.Millisecond * time.Duration(i))
-		mu.Unlock()
-		res = "+OK\r\n"
+		t := time.Now().Add(time.Millisecond * time.Duration(i))
+		storage.Set(cmd[1], cmd[2], t)
+		res = resp.SimpleString("OK")
 	default:
-		res = fmt.Sprintf("-ERR wrong number of arguments for '%s' command\r\n", cmd[0])
+		res = resp.WrongNumberOfArgs(cmd[0])
 	}
 	return res
 }
 
-func cmdGet(cmd []string, storage map[string]string, expeireAt map[string]time.Time, mu *sync.RWMutex) string {
+func cmdGet(cmd []string, storage *storage.Storage) string {
 	lower := strings.ToLower(cmd[0])
 	var res string
 	if len(cmd) != 2 {
-		res = fmt.Sprintf("-ERR wrong number of arguments for '%s' command\r\n", lower)
+		res = resp.WrongNumberOfArgs(lower)
 		return res
 	}
-	ok := checkExpierd(cmd, storage, expeireAt, mu)
-	if ok == false {
-		res = "$-1\r\n"
+	val, flag := storage.Get(cmd[1])
+	if !flag {
+		res = resp.NilBulkString()
 		return res
 	}
-	mu.RLock()
-	val := storage[cmd[1]]
-	mu.RUnlock()
-	res = fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
+	res = val
 	return res
 }

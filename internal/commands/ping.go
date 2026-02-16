@@ -1,20 +1,21 @@
 package commands
 
 import (
-	"fmt"
 	"strings"
+
+	"github.com/FMR006/redis-go/internal/resp"
 )
 
 func cmdPing(cmd []string) string {
 	lower := strings.ToLower(cmd[0])
 	var res string
 	if len(cmd) == 1 {
-		res = "+PONG\r\n"
+		res = resp.BulkString("PONG")
 	} else if len(cmd) == 2 {
 		msg := cmd[1]
-		res = fmt.Sprintf("$%d\r\n%s\r\n", len(msg), msg)
+		res = resp.BulkString(msg)
 	} else {
-		res = fmt.Sprintf("-ERR wrong number of arguments for '%s' command\r\n", lower)
+		res = resp.WrongNumberOfArgs(lower)
 	}
 	return res
 }

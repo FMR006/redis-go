@@ -7,14 +7,28 @@ import (
 	"io"
 	"net"
 
-	"yourmodule/internal/commands"
-	"yourmodule/internal/resp"
-	"yourmodule/internal/storage"
+	"github.com/FMR006/redis-go/internal/commands"
+	"github.com/FMR006/redis-go/internal/resp"
+	"github.com/FMR006/redis-go/internal/storage"
 )
 
 type Server struct {
 	Addr  string
-	Store *storage.Store
+	Store *storage.Storage
+}
+
+func NewServer(addr string, store *storage.Storage) *Server {
+
+	if addr == "" {
+		addr = ":6379"
+	}
+	if store == nil {
+		store = storage.NewStorage()
+	}
+	return &Server{
+		Addr:  addr,
+		Store: store,
+	}
 }
 
 func (s *Server) ListenAndServe() error {
@@ -31,7 +45,6 @@ func (s *Server) ListenAndServe() error {
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
-			// In a real server you might continue on temporary errors.
 			return fmt.Errorf("accept: %w", err)
 		}
 		go s.handleConn(conn)

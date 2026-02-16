@@ -3,18 +3,81 @@ package storage
 import (
 	"sync"
 	"time"
+
+	"github.com/FMR006/redis-go/internal/resp"
+)
+
+type ValueType uint8
+
+const (
+	TypeString ValueType = iota
+	TypeList
+	TypeSet
+	TypeHash
 )
 
 type Storage struct {
-	storage  map[string]string
-	expireAt map[string]time.Time
-	mu       *sync.RWMutex
+	mu   sync.RWMutex
+	data map[string]*Entry
 }
 
-func (s *Storage) NewStorage() *Storage {
+type Entry struct {
+	Type     ValueType
+	ExpireAt time.Time
+
+	Str  []byte
+	List [][]byte
+	Set  map[string]struct{}
+	Hash map[string][]byte
+}
+
+func NewStorage() *Storage {
 	return &Storage{
-		storage:  make(map[string]string),
-		expireAt: make(map[string]time.Time),
-		mu:       &sync.RWMutex{},
+		data: make(map[string]*Entry),
 	}
+}
+
+func (s *Storage) Set(key string, value string, expireAt time.Time) {
+	byteValue := resp.ToBytes(value)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.data[key] = &Entry{
+		Type:     TypeString,
+		ExpireAt: expireAt,
+		Str:      byteValue,
+	}
+}
+
+func (s *Storage) Get(key string) (string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	entry, ok := s.data[key]
+
+	if !ok || entry.Type != TypeString {
+		return resp.NilBulkString(), false
+	}
+	ok = s.CheckExpired(key)
+	if !ok {
+		return resp.NilBulkString(), false
+	}
+	value := resp.ToString(entry.Str)
+
+	return resp.BulkString(value), true
+}
+
+func (s *Storage) CheckExpired(key string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	entry, ok := s.data[key]
+	if !ok {
+		return false
+	}
+	if entry.ExpireAt.IsZero() {
+		return true
+	}
+	return entry.ExpireAt.After(time.Now())
 }

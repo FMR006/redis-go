@@ -1,16 +1,16 @@
 package commands
 
 import (
-	"fmt"
 	"strings"
-	"sync"
-	"time"
+
+	"github.com/FMR006/redis-go/internal/resp"
+	"github.com/FMR006/redis-go/internal/storage"
 )
 
-func dispatch(cmd []string, storage map[string]string, expireAt map[string]time.Time, mu *sync.RWMutex) string {
+func Dispatch(cmd []string, storage *storage.Storage) string {
 	var res string
 	if len(cmd) == 0 {
-		return "-ERR empty command\r\n"
+		return resp.Error("empty command")
 	}
 	upper := strings.ToUpper(cmd[0])
 	switch upper {
@@ -19,12 +19,12 @@ func dispatch(cmd []string, storage map[string]string, expireAt map[string]time.
 	case "ECHO":
 		res = cmdEcho(cmd)
 	case "SET":
-		res = cmdSet(cmd, storage, expireAt, mu)
+		res = cmdSet(cmd, storage)
 	case "GET":
-		res = cmdGet(cmd, storage, expireAt, mu)
+		res = cmdGet(cmd, storage)
 
 	default:
-		res = fmt.Sprintf("-ERR unknown command '%s'\r\n", cmd[0])
+		res = resp.UnknownCommand(cmd[0])
 	}
 	return res
 

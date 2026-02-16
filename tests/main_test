@@ -1,0 +1,106 @@
+// package main
+
+// import (
+// 	"bufio"
+// 	"strings"
+// 	"sync"
+// 	"testing"
+// 	"time"
+// )
+
+// func TestReaderLine(t *testing.T) {
+// 	// arrange: подготавливаем входные данные
+// 	input := "hello\r\n"
+// 	reader := bufio.NewReader(strings.NewReader(input))
+
+// 	// act: вызываем тестируемую функцию
+// 	line, err := readerLine(reader)
+
+// 	// assert: проверяем результат
+// 	if err != nil {
+// 		t.Fatalf("unexpected error: %v", err)
+// 	}
+
+// 	if line != "hello" {
+// 		t.Fatalf("expected %q, got %q", "hello", line)
+// 	}
+// }
+
+// func TestReadExactly(t *testing.T) {
+// 	input := "hello"
+// 	n := 5
+// 	reader := bufio.NewReader(strings.NewReader(input))
+
+// 	line, err := readExactly(reader, n)
+
+// 	if err != nil {
+// 		t.Fatalf("unexpected error: %v", err)
+// 	}
+
+// 	if line != "hello" {
+// 		t.Fatalf("expected %q, got %q", "hello", line)
+// 	}
+// }
+
+// func TestReadBulkstring(t *testing.T) {
+// 	input := "$3\r\nhey\r\n"
+// 	reader := bufio.NewReader(strings.NewReader(input))
+
+// 	line, err := readBulkString(reader)
+
+// 	if err != nil {
+// 		t.Fatalf("unexpected error: %v", err)
+// 	}
+// 	if line != "hey" {
+// 		t.Fatalf("expected %q, got %q", "hey", line)
+// 	}
+// }
+
+// func TestReadArray(t *testing.T) {
+// 	input := "*2\r\n$4\r\nECHO\r\n$3\r\nhey\r\n"
+// 	reader := bufio.NewReader(strings.NewReader(input))
+
+// 	expected := []string{"ECHO", "hey"}
+
+// 	array, err := readArray(reader)
+
+// 	if err != nil {
+// 		t.Fatalf("unexpected error: %v", err)
+// 	}
+
+// 	if len(array) != len(expected) {
+// 		t.Fatalf("expected %d elements, got %d", len(expected), len(array))
+// 	}
+// 	for i := range array {
+// 		if array[i] != expected[i] {
+// 			t.Fatalf("on elements %d expected %q, got %q", i, expected[i], array[i])
+// 		}
+// 	}
+// }
+
+// func TestDispatch(t *testing.T) {
+// 	mu := sync.RWMutex{}
+// 	expected1 := "$3\r\nhey\r\n"
+// 	expected2 := "+OK\r\n"
+// 	expected3 := "$3\r\nfoo\r\n"
+// 	input1 := []string{"eChO", "hey"}
+// 	input2 := []string{"set", "bar", "foo"}
+// 	input3 := []string{"get", "bar"}
+// 	storage := make(map[string]string)
+// 	expireAt := make(map[string]time.Time)
+
+// 	res := dispatch(input1, storage, expireAt, &mu)
+// 	if res != expected1 {
+// 		t.Fatalf("expected %q, got %q", expected1, res)
+// 	}
+
+// 	res = dispatch(input2, storage, expireAt, &mu)
+// 	if res != expected2 {
+// 		t.Fatalf("expected %q, got %q", expected2, res)
+// 	}
+
+// 	res = dispatch(input3, storage, expireAt, &mu)
+// 	if res != expected3 {
+// 		t.Fatalf("expected %q, got %q", expected3, res)
+// 	}
+// }
