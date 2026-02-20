@@ -30,6 +30,18 @@ func NilBulkString() string {
 	return "$-1\r\n"
 }
 
+func Array(elements [][]byte) string {
+	if len(elements) == 0 {
+		return "*0\r\n"
+	}
+
+	var res string
+	for _, elem := range elements {
+		res += BulkString(string(elem))
+	}
+	return "*" + strconv.Itoa(len(elements)) + "\r\n" + res
+}
+
 func WrongNumberOfArgs(s string) string {
 	return "-ERR wrong number of arguments for '" + s + "' command\r\n"
 }

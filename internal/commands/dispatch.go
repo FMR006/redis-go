@@ -22,7 +22,10 @@ func Dispatch(cmd []string, storage *storage.Storage) string {
 		res = cmdSet(cmd, storage)
 	case "GET":
 		res = cmdGet(cmd, storage)
-
+	case "RPUSH":
+		res = cmdRPush(cmd, storage)
+	case "LRANGE":
+		res = cmdLRange(cmd, storage)
 	default:
 		res = resp.UnknownCommand(cmd[0])
 	}
