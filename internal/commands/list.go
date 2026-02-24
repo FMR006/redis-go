@@ -31,16 +31,17 @@ func cmdRPush(cmd []string, storage *storage.Storage) string {
 			return resp.WrongType()
 		}
 		return resp.Integer(i)
-	}
-	key := cmd[1]
-	value := cmd[2]
+	} else {
+		key := cmd[1]
+		value := cmd[2]
 
-	i, ok := storage.RPush(key, value, time.Time{})
-	if !ok {
-		return resp.WrongType()
-	}
+		i, ok := storage.RPush(key, value, time.Time{})
+		if !ok {
+			return resp.WrongType()
+		}
 
-	return resp.Integer(i)
+		return resp.Integer(i)
+	}
 }
 
 func cmdLRange(cmd []string, storage *storage.Storage) string {
@@ -64,4 +65,45 @@ func cmdLRange(cmd []string, storage *storage.Storage) string {
 	}
 
 	return resp.Array(values)
+}
+
+func cmdLPush(cmd []string, storage *storage.Storage) string {
+	lower := strings.ToLower(cmd[0])
+
+	if len(cmd) != 3 {
+		if len(cmd) < 3 {
+			return resp.WrongNumberOfArgs(lower)
+		}
+		for i := 2; i < len(cmd)-1; i++ {
+			key := cmd[1]
+			value := cmd[i]
+			_, ok := storage.LPush(key, value, time.Time{})
+
+			if !ok {
+				return resp.WrongType()
+			}
+		}
+		key := cmd[1]
+		line := len(cmd)
+
+		i, ok := storage.LPush(key, cmd[line-1], time.Time{})
+
+		if !ok {
+			return resp.WrongType()
+		}
+
+		res := resp.Integer(i)
+		return res
+	} else {
+		key := cmd[1]
+		value := cmd[2]
+
+		i, ok := storage.LPush(key, value, time.Time{})
+
+		if !ok {
+			return resp.WrongType()
+		}
+		res := resp.Integer(i)
+		return res
+	}
 }

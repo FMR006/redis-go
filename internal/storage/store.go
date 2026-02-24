@@ -161,3 +161,45 @@ func (s *Storage) LRange(key string, start int, stop int) ([][]byte, bool) {
 	}
 	return val.List[start:stop], true
 }
+
+func (s *Storage) LPush(key string, value string, expireAt time.Time) (int, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	v, ok := s.data[key]
+
+	if ok && v.Type != TypeList {
+		isExpired := s.CheckExpired(key)
+		if isExpired {
+			delete(s.data, key)
+		} else {
+			return 0, false
+		}
+	}
+	bytesValue := resp.ToBytes(value)
+
+	switch ok {
+	case false:
+		s.data[key] = &Entry{
+			Type:     TypeList,
+			ExpireAt: expireAt,
+
+			List: [][]byte{bytesValue},
+		}
+
+	case true:
+		buf := s.data[key].List
+		finalList := make([][]byte, 0, 64)
+
+		finalList = append(finalList, bytesValue)
+		finalList = append(finalList, buf...)
+
+		s.data[key] = &Entry{
+			Type:     TypeList,
+			ExpireAt: expireAt,
+
+			List: finalList,
+		}
+	}
+	return len(s.data[key].List), true
+}
