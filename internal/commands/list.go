@@ -107,3 +107,15 @@ func cmdLPush(cmd []string, storage *storage.Storage) string {
 		return res
 	}
 }
+
+func cmdLLen(cmd []string, storage *storage.Storage) string {
+	lower := strings.ToLower(cmd[0])
+
+	if len(cmd) != 2 {
+		return resp.WrongNumberOfArgs(lower)
+	}
+
+	i := storage.LLen(cmd[1])
+
+	return resp.Integer(i)
+}

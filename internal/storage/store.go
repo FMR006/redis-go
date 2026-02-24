@@ -37,17 +37,29 @@ func NewStorage() *Storage {
 	}
 }
 
-func (s *Storage) Set(key string, value string, expireAt time.Time) {
-	byteValue := resp.ToBytes(value)
-
+func (s *Storage) Set(key string, value string, expireAt time.Time) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	v, ok := s.data[key]
+
+	if ok && v.Type != TypeString {
+		isExpired := s.CheckExpired(key)
+		if isExpired {
+			delete(s.data, key)
+		} else {
+			return false
+		}
+	}
+
+	byteValue := resp.ToBytes(value)
 
 	s.data[key] = &Entry{
 		Type:     TypeString,
 		ExpireAt: expireAt,
 		Str:      byteValue,
 	}
+	return true
 }
 
 func (s *Storage) Get(key string) (string, bool) {
@@ -202,4 +214,17 @@ func (s *Storage) LPush(key string, value string, expireAt time.Time) (int, bool
 		}
 	}
 	return len(s.data[key].List), true
+}
+
+func (s *Storage) LLen(key string) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	v, ok := s.data[key]
+
+	if !ok || v.Type != TypeList || v.List == nil {
+		return 0
+	}
+
+	return len(v.List)
 }

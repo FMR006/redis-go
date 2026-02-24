@@ -28,6 +28,8 @@ func Dispatch(cmd []string, storage *storage.Storage) string {
 		res = cmdLRange(cmd, storage)
 	case "LPUSH":
 		res = cmdLPush(cmd, storage)
+	case "LLEN":
+		res = cmdLLen(cmd, storage)
 	default:
 		res = resp.UnknownCommand(cmd[0])
 	}

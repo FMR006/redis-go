@@ -15,7 +15,11 @@ func cmdSet(cmd []string, storage *storage.Storage) string {
 
 	switch len(cmd) {
 	case 3:
-		storage.Set(cmd[1], cmd[2], time.Time{})
+		ok := storage.Set(cmd[1], cmd[2], time.Time{})
+		if !ok {
+			res = resp.WrongType()
+			return res
+		}
 		res = resp.SimpleString("OK")
 
 	case 5:
